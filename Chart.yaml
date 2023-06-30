@@ -57,6 +57,3 @@ dependencies:
   - name: nuxeo
     version: 1.0.0
     repository: charts/nuxeo-1.0.0.tgz
-  - name: nats
-    version: 0.19.16
-    repository: charts/nats-0.19.16.tgz
