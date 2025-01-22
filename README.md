@@ -7,7 +7,8 @@
 # **Instructions**
 
 - [AKS Detailed Installation Guide](#aks-detailed-installation-guide)
-- [**Instructions**](#instructions)
+- [Instructions](#instructions)
+  - [Azure Container Registry (ACR) Setup](#list-of-repositories-for-ecr-setup)
 - [Step 1 - Helm charts](#step-1---helm-charts)
   - [Overview](#overview)
   - [Prerequisites](#prerequisites)
@@ -24,7 +25,7 @@
   - [3. ArangoDB (Single Deployment)](#3-arangodb-single-deployment)
   - [4. ArangoDB Ingress Proxy](#4-arangodb-ingress-proxy)
   - [5. Jenkins](#5-jenkins)
-  - [6. Redis-Cluster](#6-redis-cluster)
+  - [6. Valkey-Cluster](#6-valkey-cluster)
   - [7. Nginx Ingress Controller](#7-nginx-ingress-controller)
   - [8. APM, Logstash, Kibana (Elasticsearch)](#8-apm-logstash-kibana-elasticsearch)
   - [9. Grafana](#9-grafana)
@@ -80,6 +81,68 @@ Read through the infrastructure spec before starting with the deployment guide.
 
 **Important:** Access to the Tazama GIT Repository is required to proceed. If you do not currently have this access, or if you are unsure about your access level, please reach out to the Tazama Team to request the necessary permissions. It's crucial to ensure that you have the appropriate credentials to access the repository for seamless integration and workflow management.
 
+## Azure Container Registry (ACR) Setup
+
+1. Create an Azure container registry with a name e.g `tazama`
+2. Add a list of Repositories for the different services listed below.
+
+Our repository list includes a variety of components, each representing specific microservices and tools within our ecosystem. You need to create these in your AWS env in the ECR service.
+
+**Repository list:**
+
+Default `release version`: **rel-1-0-0** to make e.g `rule-001-rel-1-0-0-dev`
+
+- `rule-001-<release version>-<envName variable set in jenkins>`
+- `rule-002-<release version>-<envName variable set in jenkins>`
+- `rule-003-<release version>-<envName variable set in jenkins>`
+- `rule-004-<release version>-<envName variable set in jenkins>`
+- `rule-006-<release version>-<envName variable set in jenkins>`
+- `rule-007-<release version>-<envName variable set in jenkins>`
+- `rule-008-<release version>-<envName variable set in jenkins>`
+- `rule-010-<release version>-<envName variable set in jenkins>`
+- `rule-011-<release version>-<envName variable set in jenkins>`
+- `rule-016-<release version>-<envName variable set in jenkins>`
+- `rule-017-<release version>-<envName variable set in jenkins>`
+- `rule-018-<release version>-<envName variable set in jenkins>`
+- `rule-021-<release version>-<envName variable set in jenkins>`
+- `rule-024-<release version>-<envName variable set in jenkins>`
+- `rule-025-<release version>-<envName variable set in jenkins>`
+- `rule-026-<release version>-<envName variable set in jenkins>`
+- `rule-027-<release version>-<envName variable set in jenkins>`
+- `rule-028-<release version>-<envName variable set in jenkins>`
+- `rule-030-<release version>-<envName variable set in jenkins>`
+- `rule-044-<release version>-<envName variable set in jenkins>`
+- `rule-045-<release version>-<envName variable set in jenkins>`
+- `rule-048-<release version>-<envName variable set in jenkins>`
+- `rule-054-<release version>-<envName variable set in jenkins>`
+- `rule-063-<release version>-<envName variable set in jenkins>`
+- `rule-074-<release version>-<envName variable set in jenkins>`
+- `rule-075-<release version>-<envName variable set in jenkins>`
+- `rule-076-<release version>-<envName variable set in jenkins>`
+- `rule-078-<release version>-<envName variable set in jenkins>`
+- `rule-083-<release version>-<envName variable set in jenkins>`
+- `rule-084-<release version>-<envName variable set in jenkins>`
+- `rule-090-<release version>-<envName variable set in jenkins>`
+- `rule-091-<release version>-<envName variable set in jenkins>`
+- `jenkins-inbound-agent`
+- `event-director-<release version>-<envName variable set in jenkins>`
+- `event-sidecar-<release version>`
+- `lumberjack-<envName variable set in jenkins>`
+- `tms-service-<release version>-<envName variable set in jenkins>`
+- `transaction-aggregation-decisioning-processor-<release version>-<envName variable set in jenkins>`
+- `typology-processor-<release version>-<envName variable set in jenkins>`
+- `event-director-<release version>-<envName variable set in jenkins>`
+- `auth-service-<release version>-<envName variable set in jenkins>`
+- `admin-service-<release version>-<envName variable set in jenkins>`
+- `relay-service-<release version>-<envName variable set in jenkins>`
+- `event-flow-<release version>-<envName variable set in jenkins>`
+
+3. Log in to registry
+
+Before pushing and pulling container images, you must log in to the registry instance. Sign into the Azure CLI on your local machine, then run the az acr login command. Specify only the registry resource name when logging in with the Azure CLI. Don't use the fully qualified login server name. e.g `az acr login --name tazama`
+
+4. Create a token that will be used in the later deployment steps. This token will need to be saved in Jenkins credentials / secrets. The command to use for this will be `az acr token` Please reference this [az acr token doc](https://learn.microsoft.com/en-us/cli/azure/acr/token?view=azure-cli-latest) for further explanation.
+
 # Step 1 - Helm charts
 
 ## Overview
@@ -127,7 +190,7 @@ First, add the Tazama Helm repository to enable the installation of charts:
 12. Grafana - **Optional**
 13. `Prometheus - **Optional**
 14. Vault - **Optional**
-15. KeyCloak - **Optional**
+15. KeyCloak
 
 **Optional** - Please note that these are additional features; while not required, they can enhance the platform's capabilities. Implementing them is optional and will not hinder the basic operation or the end-to-end functionality of the platform.
 
@@ -160,6 +223,7 @@ To expose services outside your cluster, enable ingress on necessary charts:
 2. ArangoDb
 3. Jenkins
 4. TMS
+5. Keycloak
 
 ```bash
 helm install kibana Tazama/kibana --namespace=development --set ingress.enabled=true
@@ -189,11 +253,16 @@ helm install apm Tazama/apm-server --namespace=development
 helm install logstash Tazama/logstash --namespace=development
 helm install arangodb-ingress-proxy Tazama/arangodb-ingress-proxy --namespace=development
 helm install arango Tazama/arangodb --namespace=development
-helm install redis-cluster Tazama/redis-cluster --namespace=development
 helm install nats Tazama/nats --namespace=development
 ```
 
-3. We're going to install Jenkins with helm by following the official docs. Take note of post installation notes to retrieve password and port forward.
+3. Install Valkey. Valkey is an open source (BSD) high-performance key/value datastore that supports a variety workloads such as caching, message queues, and can act as a primary database.
+
+```bash
+helm install valkey-cluster oci://registry-1.docker.io/bitnamicharts/valkey --namespace=development
+```
+
+4. We're going to install Jenkins with helm by following the official docs. Take note of post installation notes to retrieve password and port forward.
 
 ```bash
 helm repo add jenkins https://charts.jenkins.io
@@ -201,9 +270,50 @@ helm repo update
 helm install jenkins jenkins/jenkins --set ingress.enabled=true --namespace=cicd
 ```
 
+### Accessing Jenkins UI
+
+The following sections of the guide require you to work within the Jenkins UI. You can either access the UI through a doamin if you configured an ingress or by port forwarding.
+
+Port forward Jenkins to be accessible on localhost:8080 by running:
+  `kubectl --namespace cicd port-forward svc/jenkins 8080:8080`
+
+Get your 'admin' user password by running:
+  `kubectl exec --namespace cicd -it svc/jenkins -c jenkins -- /bin/cat /run/secrets/additional/chart-admin-password && echo`
+
 Navigate to the Jenkins UI, username `admin` and retrieved password to login. Go to `Manage Jenkins`, Under `System Configuration`, select `Plugins` and install the `Configuration File`, `Nodejs` and `Docker` plugins that will enable later configuration steps.
 
-  For optional components like Grafana, Prometheus, Vault, and KeyCloak, use similar commands if you decide to implement these features.
+
+**Setup Notes for Deploying AKS ACR Credentials**
+
+Create a new ACR
+
+`MYACR=mycontainerregistry`
+
+`az acr create --name $MYACR --resource-group myContainerRegistryResourceGroup --sku basic`
+
+Configure ACR integration for an existing AKS cluster
+
+`az aks update --name myAKSCluster --resource-group myContainerRegistryResourceGroup --attach-acr <acr-name>`
+
+`az acr login --name <ACR_NAME>`
+
+`USERNAME=$(az acr credential show --name <ACR_NAME> --query "username" -o tsv)`
+
+`PASSWORD=$(az acr credential show --name <ACR_NAME> --query "passwords[0].value" -o tsv)`
+
+
+```kubectl create secret docker-registry frmpullsecret \
+  --docker-server=<ACR_NAME>.azurecr.io \
+  --docker-username=$USERNAME \
+  --docker-password=$PASSWORD \
+  --docker-email=<EMAIL>```
+
+
+`Ensure you have the proper AKS credentials using the az aks get-credentials command.`
+az aks get-credentials --resource-group myResourceGroup --name myAKSCluster
+
+
+For optional components like Grafana, Prometheus and Vault, use similar commands if you decide to implement these features.
 
 **Extra Information:** [https://helm.sh/docs/helm/helm_install/](https://helm.sh/docs/helm/helm_install/)
 
@@ -253,12 +363,9 @@ For a system utilizing a variety of Helm charts, optimizing performance, storage
 - **Performance**: Adjust executors and resource limits based on your CI/CD pipeline requirements.
 - **Documentation**: [Jenkins Documentation](https://www.jenkins.io/doc/book/)
 
-## 6. Redis-Cluster
+## 6. Valkey-Cluster
 
-- **Configuration**: Set up Redis in cluster mode if high availability and scalability are required.
-- **Storage**: Use persistent storage for data durability. Configure memory limits appropriately.
-- **Performance**: Tune `maxmemory` policies and replication settings for optimal performance.
-- **Documentation**: [Redis Documentation](https://redis.io/docs/)
+- **Documentation**: [Valkey Documentation](https://artifacthub.io/packages/helm/bitnami/valkey)
 
 ## 7. Nginx Ingress Controller
 
@@ -496,7 +603,7 @@ Credentials are critical for Jenkins to interact with other services like source
 1. Follow the first two steps as above to navigate to the Add Credentials page.
 2. Select **Username with password.**
 3. `Input the username for your container registry.
-4. Enter the corresponding password or access token for the registry.
+4. Enter the corresponding password or access token for the registry. This token was gotten during repository creation
 5. Assign a unique ID, such as **ContainerRegistry**.
 6. Include a description that helps identify the registry, like **Login info for the container registry.**
 7. Click **Save.**
@@ -566,8 +673,8 @@ The image shows a Jenkins configuration screen for adding a managed file, specif
 - **Use this registry for specific scoped packages:** This option indicates that the registry URL and credentials should only be used for packages with a specific scope. In this case, the scope is **frmscoe**.
 - **Registry scopes:** Here, you specify the scope for which this registry should be used. Scoped packages are prefixed with the scope in their package name, ie: `frmscoe` `tazama-lf`
 
-1. **Content:** The text area labeled 'Content' is where you can input the actual content of the **.npmrc** file. This content typically includes configuration settings like the registry URL, authentication tokens, and various other npm options. **always-auth = false** will not be always required (usually for public registries).
-2. **Add:** After configuring all the fields, you would click "Add" to save this managed file configuration.
+7. **Content:** The text area labeled 'Content' is where you can input the actual content of the **.npmrc** file. This content typically includes configuration settings like the registry URL, authentication tokens, and various other npm options. **always-auth = false** will not be always required (usually for public registries).
+8. **Add:** After configuring all the fields, you would click "Add" to save this managed file configuration.
 
 Once you've added this managed file, Jenkins can use it in various jobs that require npm to access private packages or specific registries. The managed file will be placed in the working directory of the job when it runs, ensuring that npm commands use the provided configuration.
 
@@ -675,7 +782,7 @@ Needs to be set to - **frmpullsecret - see screenshot below**
 
 By properly configuring image pull secrets in your Jenkins Kubernetes pod templates, you enable Jenkins to pull the necessary private images to run your builds within the Kubernetes cluster. Without these secrets, the image pull would fail, and your builds would not be able to run.
 
-![image-20240215-144955.png](./Images/image-20240215-144955.png)
+![image-20240215-144955.png](./Images/image-20240215-144955.png) 
 
 ### Steps to Configure Jenkins Global Variables
 
