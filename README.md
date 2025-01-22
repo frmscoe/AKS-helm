@@ -283,6 +283,30 @@ Get your 'admin' user password by running:
 Navigate to the Jenkins UI, username `admin` and retrieved password to login. Go to `Manage Jenkins`, Under `System Configuration`, select `Plugins` and install the `Configuration File`, `Nodejs` and `Docker` plugins that will enable later configuration steps.
 
 
+**Setup Notes for Deploying AKS ACR Credentials**
+
+`Create a new ACR`
+MYACR=mycontainerregistry
+az acr create --name $MYACR --resource-group myContainerRegistryResourceGroup --sku basic
+
+`Configure ACR integration for an existing AKS cluster`
+az aks update --name myAKSCluster --resource-group myContainerRegistryResourceGroup --attach-acr <acr-name>
+
+az acr login --name <ACR_NAME>
+USERNAME=$(az acr credential show --name <ACR_NAME> --query "username" -o tsv)
+PASSWORD=$(az acr credential show --name <ACR_NAME> --query "passwords[0].value" -o tsv)
+
+kubectl create secret docker-registry frmpullsecret \
+  --docker-server=<ACR_NAME>.azurecr.io \
+  --docker-username=$USERNAME \
+  --docker-password=$PASSWORD \
+  --docker-email=<EMAIL>
+
+
+`Ensure you have the proper AKS credentials using the az aks get-credentials command.`
+az aks get-credentials --resource-group myResourceGroup --name myAKSCluster
+
+
 For optional components like Grafana, Prometheus and Vault, use similar commands if you decide to implement these features.
 
 **Extra Information:** [https://helm.sh/docs/helm/helm_install/](https://helm.sh/docs/helm/helm_install/)
@@ -643,8 +667,8 @@ The image shows a Jenkins configuration screen for adding a managed file, specif
 - **Use this registry for specific scoped packages:** This option indicates that the registry URL and credentials should only be used for packages with a specific scope. In this case, the scope is **frmscoe**.
 - **Registry scopes:** Here, you specify the scope for which this registry should be used. Scoped packages are prefixed with the scope in their package name, ie: `frmscoe` `tazama-lf`
 
-1. **Content:** The text area labeled 'Content' is where you can input the actual content of the **.npmrc** file. This content typically includes configuration settings like the registry URL, authentication tokens, and various other npm options. **always-auth = false** will not be always required (usually for public registries).
-2. **Add:** After configuring all the fields, you would click "Add" to save this managed file configuration.
+7. **Content:** The text area labeled 'Content' is where you can input the actual content of the **.npmrc** file. This content typically includes configuration settings like the registry URL, authentication tokens, and various other npm options. **always-auth = false** will not be always required (usually for public registries).
+8. **Add:** After configuring all the fields, you would click "Add" to save this managed file configuration.
 
 Once you've added this managed file, Jenkins can use it in various jobs that require npm to access private packages or specific registries. The managed file will be placed in the working directory of the job when it runs, ensuring that npm commands use the provided configuration.
 
@@ -752,7 +776,7 @@ Needs to be set to - **frmpullsecret - see screenshot below**
 
 By properly configuring image pull secrets in your Jenkins Kubernetes pod templates, you enable Jenkins to pull the necessary private images to run your builds within the Kubernetes cluster. Without these secrets, the image pull would fail, and your builds would not be able to run.
 
-![image-20240215-144955.png](./Images/image-20240215-144955.png)
+![image-20240215-144955.png](./Images/image-20240215-144955.png) 
 
 ### Steps to Configure Jenkins Global Variables
 
