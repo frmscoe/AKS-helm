@@ -2479,7 +2479,7 @@ ArangoToken
 OpenfaasPassword
 OpenfaasURL
 RedisHost
-RedisPassword
+ValkeyPassword
 RuleVersion</p>
 <p dir="auto">NOTE: Additional work will be done changing these variables to Vault secrets for the sensitive information.</p>
 <p dir="auto">Nuxeo Case Management - If the opensource case management system is required please run the following jobs to build the docker image and deploy Nuxeo to your cluster.</p>
