@@ -17,7 +17,7 @@ Params:
   {{- $existingSecret := ternary (printf "%s%s" $valueKeyPrefix "auth.existingSecret") (printf "%s%s" $valueKeyPrefix "existingSecret") (eq $standarizedVersion "true") }}
   {{- $existingSecretValue := include "common.utils.getValueFromKey" (dict "key" $existingSecret "context" .context) }}
 
-  {{- $valueKeyRedisPassword := ternary (printf "%s%s" $valueKeyPrefix "auth.password") (printf "%s%s" $valueKeyPrefix "password") (eq $standarizedVersion "true") }}
+  {{- $valueKeyValkeyPassword := ternary (printf "%s%s" $valueKeyPrefix "auth.password") (printf "%s%s" $valueKeyPrefix "password") (eq $standarizedVersion "true") }}
   {{- $valueKeyRedisUseAuth := ternary (printf "%s%s" $valueKeyPrefix "auth.enabled") (printf "%s%s" $valueKeyPrefix "usePassword") (eq $standarizedVersion "true") }}
 
   {{- if and (or (not $existingSecret) (eq $existingSecret "\"\"")) (eq $enabled "true") -}}
@@ -25,8 +25,8 @@ Params:
 
     {{- $useAuth := include "common.utils.getValueFromKey" (dict "key" $valueKeyRedisUseAuth "context" .context) -}}
     {{- if eq $useAuth "true" -}}
-      {{- $requiredRedisPassword := dict "valueKey" $valueKeyRedisPassword "secret" .secret "field" "redis-password" -}}
-      {{- $requiredPasswords = append $requiredPasswords $requiredRedisPassword -}}
+      {{- $requiredValkeyPassword := dict "valueKey" $valueKeyValkeyPassword "secret" .secret "field" "redis-password" -}}
+      {{- $requiredPasswords = append $requiredPasswords $requiredValkeyPassword -}}
     {{- end -}}
 
     {{- include "common.validations.values.multiple.empty" (dict "required" $requiredPasswords "context" .context) -}}
